@@ -1,2 +1,1 @@
-# rust-examples
-Rust examples
+# Rust examples
