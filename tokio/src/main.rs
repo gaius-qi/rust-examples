@@ -1,6 +1,23 @@
-use tokio;
+use std::error::Error;
+use tokio::sync::broadcast;
 
-fn main() {
-    let _rt = tokio::runtime::Runtime::new().unwrap();
-    std::thread::sleep(std::time::Duration::from_secs(10));
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    let (tx, mut rx1) = broadcast::channel(16);
+    let mut rx2 = tx.subscribe();
+
+    tokio::spawn(async move {
+        assert_eq!(rx1.recv().await.unwrap(), 10);
+        assert_eq!(rx1.recv().await.unwrap(), 20);
+    });
+
+    tokio::spawn(async move {
+        assert_eq!(rx2.recv().await.unwrap(), 10);
+        assert_eq!(rx2.recv().await.unwrap(), 20);
+    });
+
+    tx.send(10).unwrap();
+    tx.send(20).unwrap();
+
+    Ok(())
 }
