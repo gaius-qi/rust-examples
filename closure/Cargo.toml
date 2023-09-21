@@ -11,3 +11,5 @@ tokio = { version = "1.29.1", features = ["full"] }
 tokio-util = { version = "0.7.8", features = ["full"] }
 tokio-stream = "0.1.14"
 bytes = "1.2"
+base64ct = {version = "1.6.0", features = [ "alloc"] }
+base16ct = { version = "0.2", features = ["alloc"] }
