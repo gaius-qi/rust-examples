@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
 
     io::copy(&mut tee, &mut output).await.unwrap();
     let hash = hasher.finalize();
-    println!("hash: {}", hash);
+    println!("hash: {:x}", hash);
 
     let base64_hash = Base64::encode_string(&hash);
     println!("Base64-encoded hash: {}", base64_hash);
