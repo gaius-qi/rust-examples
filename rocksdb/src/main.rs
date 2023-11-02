@@ -12,7 +12,8 @@ fn main() {
         db.put(b"piece-1", b"1").unwrap();
         db.put(b"piece-2", b"2").unwrap();
         db.put(b"piece-3", b"3").unwrap();
-        db.put(b"task", b"xxx").unwrap();
+        db.put(b"task-1", b"xxx-1").unwrap();
+        db.put(b"task-2", b"xxx-2").unwrap();
 
         let mut iter = db.raw_iterator();
         iter.seek(b"piece-");
