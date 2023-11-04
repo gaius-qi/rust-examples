@@ -16,9 +16,9 @@ fn main() {
         db.put("aaa2".as_bytes(), b"aaa2").unwrap();
         db.put("bbb1".as_bytes(), b"bbb1").unwrap();
         db.put("bbb2".as_bytes(), b"bbb2").unwrap();
-
         let iter = db.prefix_iterator("aaa".as_bytes());
         for ele in iter {
+            println!("{:?}", str::from_utf8(&ele.unwrap().0).unwrap());
             println!("{:?}", str::from_utf8(&ele.unwrap().1).unwrap());
         }
     }
@@ -49,9 +49,9 @@ fn main() {
         db.put_cf(handle, "aaa2".as_bytes(), b"aaa2").unwrap();
         db.put_cf(handle, "bbb1".as_bytes(), b"bbb1").unwrap();
         db.put_cf(handle, "bbb2".as_bytes(), b"bbb2").unwrap();
-
         let iter = db.prefix_iterator_cf(handle, "aaa".as_bytes());
         for ele in iter {
+            println!("{:?}", str::from_utf8(&ele.unwrap().0).unwrap());
             println!("{:?}", str::from_utf8(&ele.unwrap().1).unwrap());
         }
     }
