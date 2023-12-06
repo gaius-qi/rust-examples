@@ -19,5 +19,21 @@ async fn main() -> Result<(), Box<dyn Error>> {
     tx.send(10).unwrap();
     tx.send(20).unwrap();
 
+    let sleep = tokio::time::sleep(std::time::Duration::from_secs(2));
+    tokio::pin!(sleep);
+
+    let mut interval = tokio::time::interval(std::time::Duration::from_secs(1));
+    loop {
+        tokio::select! {
+            _ = interval.tick() => {
+                println!("tick");
+            }
+            _ = &mut sleep => {
+                println!("timeout");
+                break;
+            }
+        }
+    }
+
     Ok(())
 }
