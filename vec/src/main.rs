@@ -26,4 +26,14 @@ fn main() {
     vals.sort_by(|a, b| a.age.cmp(&b.age));
 
     println!("Sorted by age: {:?}", vals);
+
+    let mut views = Vec::new();
+    for val in vals.iter() {
+        println!("Name: {}, Age: {}", val.name, val.age);
+        views.push(val.name.clone());
+    }
+
+    vals.retain(|val| !views.contains(&val.name));
+
+    println!("Filtered by name: {:?}", vals);
 }

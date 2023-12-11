@@ -8,6 +8,7 @@ fn main() {
 
     map.entry(1).and_modify(|v| *v += 1);
     map.entry(3).and_modify(|v| *v += 1).or_insert(1);
+    map.entry(4).and_modify(|v| *v += 1);
 
     println!("{:?}", map);
 }
