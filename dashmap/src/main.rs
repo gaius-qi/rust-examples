@@ -1,4 +1,4 @@
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use std::sync::Arc;
 
 fn main() {
@@ -19,4 +19,13 @@ fn main() {
     handle2.join().unwrap();
 
     println!("{:?}", reviews);
+
+    let blogs = DashSet::new();
+    blogs.insert("Veloren");
+    blogs.insert("Jerry");
+    blogs.insert("Terry");
+
+    let blog = blogs.iter().next();
+
+    println!("{:?}", blog.unwrap().to_string());
 }
