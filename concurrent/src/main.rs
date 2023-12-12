@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use tokio::sync::mpsc;
 use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 
@@ -16,13 +17,28 @@ async fn do_one(i: u32, semaphore: Arc<Semaphore>) -> Result<(), &'static str> {
 
 #[tokio::main]
 async fn main() {
+    let (in_stream_tx, mut in_stream_rx) = mpsc::channel(128);
+
+    tokio::spawn(async move {
+        for i in 0..10 {
+            in_stream_tx.send(i).await.unwrap();
+        }
+    });
+
     let mut set = JoinSet::new();
 
     let semaphore = Arc::new(Semaphore::new(3));
 
-    for i in 0..10 {
-        let semaphore = semaphore.clone();
-        set.spawn(do_one(i, semaphore));
+    loop {
+        tokio::select! {
+            n = in_stream_rx.recv() => {
+                if n.is_none() {
+                    break;
+                }
+                let semaphore = semaphore.clone();
+                set.spawn(do_one(n.unwrap(), semaphore));
+            },
+        }
     }
 
     while let Some(res) = set.join_next().await {
