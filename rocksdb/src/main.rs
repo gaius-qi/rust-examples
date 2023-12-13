@@ -88,7 +88,8 @@ fn main() {
         txn.put("aaa1".as_bytes(), value).unwrap();
         txn.commit().unwrap();
 
-        let iter = db.prefix_iterator("aaa".as_bytes());
+        let txn = db.transaction();
+        let iter = txn.prefix_iterator("aaa".as_bytes());
         for ele in iter {
             println!(
                 "test - key: {:?} value: {:?}",
