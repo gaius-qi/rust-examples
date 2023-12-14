@@ -1,4 +1,4 @@
-use rocksdb::{Options, TransactionDB, TransactionDBOptions, DB};
+use rocksdb::{IteratorMode, Options, TransactionDB, TransactionDBOptions, DB};
 use std::str;
 
 fn main() {
@@ -92,7 +92,15 @@ fn main() {
         let iter = txn.prefix_iterator("aaa".as_bytes());
         for ele in iter {
             println!(
-                "test - key: {:?} value: {:?}",
+                "test3-prefix - key: {:?} value: {:?}",
+                str::from_utf8(&ele.clone().unwrap().0).unwrap(),
+                str::from_utf8(&ele.clone().unwrap().1).unwrap()
+            );
+        }
+
+        for ele in db.iterator(IteratorMode::Start) {
+            println!(
+                "test3-full - key: {:?} value: {:?}",
                 str::from_utf8(&ele.clone().unwrap().0).unwrap(),
                 str::from_utf8(&ele.clone().unwrap().1).unwrap()
             );
