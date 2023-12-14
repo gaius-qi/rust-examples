@@ -34,4 +34,6 @@ fn main() {
     let mut buf3 = [0; 3];
     f.read_exact(&mut buf3).expect("read failed");
     println!("{:?}", buf3);
+
+    fs::remove_file("content").expect("remove file failed");
 }
