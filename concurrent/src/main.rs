@@ -44,13 +44,13 @@ async fn main() {
     while let Some(res) = set.join_next().await {
         match res {
             Ok(v) => match v {
-                Ok(_) => println!("task succeeded 1"),
+                Ok(_) => println!("task succeeded"),
                 Err(_) => {
-                    println!("task failed 1");
+                    println!("task failed");
                     set.abort_all()
                 }
             },
-            Err(_) => println!("task failed 2"),
+            Err(_) => println!("task failed"),
         }
     }
 }
