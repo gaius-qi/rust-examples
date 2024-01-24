@@ -10,13 +10,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     Ok(())
 }
 
-async fn proxy_service(mut req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+async fn proxy_service(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     println!(
-        "Got request at: {} {:?} {} {}",
+        "Got request at: {} {:?} {:?} {:?} {:?}",
         req.uri().to_string(),
-        req.uri().authority().map(|auth| auth.to_string()),
+        req.uri().host(),
+        req.uri().port(),
         req.uri().path(),
-        req.method()
+        req.uri().query(),
     );
 
     let client = Client::new();
