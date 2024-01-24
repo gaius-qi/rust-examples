@@ -12,3 +12,4 @@ rustls = { version = "0.19", features = ["dangerous_configuration"] }
 tokio-rustls = "0.22"
 hyper-rustls = "0.22"
 futures = "0.3"
+http = "0.2"

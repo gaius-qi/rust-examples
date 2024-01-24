@@ -20,14 +20,18 @@ async fn proxy_service(req: Request<Body>) -> Result<Response<Body>, hyper::Erro
         req.uri().query(),
     );
 
-    let client = Client::new();
-    let uri = format!("http://www.google.com{}", req.uri().path());
+    let mut parts = req.uri().clone().into_parts();
+    parts.scheme = Some(http::uri::Scheme::HTTPS);
 
-    println!("Forwarding request to: {} {}", uri, req.method());
+    let new_uri = http::Uri::from_parts(parts).unwrap();
+    println!("New URI: {}", new_uri);
+
+    let client = Client::new();
+    println!("Forwarding request to: {} {}", new_uri, req.method());
 
     let forwarded_req = Request::builder()
         .method(req.method())
-        .uri(uri)
+        .uri(new_uri)
         .version(req.version())
         .body(req.into_body())
         .unwrap();
