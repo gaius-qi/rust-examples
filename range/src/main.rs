@@ -1,3 +1,5 @@
+use std::cmp::{max, min};
+
 fn main() {
     let length_part = 5;
     let start = 0;
@@ -20,4 +22,8 @@ fn main() {
     }
 
     println!("numbers: {:?}", numbers);
+
+    let a = 1..10;
+    let b = 0..2;
+    println!("a: {} {}", max(a.start, b.start), min(a.end, b.end));
 }
