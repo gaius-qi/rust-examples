@@ -15,6 +15,7 @@ futures = "0.3"
 http = "1"
 http-body-util = "0.1.0"
 bytes = "1.4"
-hyper-util = { version = "0.1.2", features = ["tokio"] }
+hyper-util = { version = "0.1.0", features = ["client-legacy", "tokio", "http1"] }
 tokio-util = { version = "0.7.8", features = ["full"] }
 futures-util = "0.3.30"
+hyper-tls = "0.6.0"

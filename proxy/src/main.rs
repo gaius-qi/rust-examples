@@ -2,11 +2,12 @@ use std::net::SocketAddr;
 
 use bytes::Bytes;
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
-use hyper::client::conn::http1::Builder;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::upgrade::Upgraded;
-use hyper::{Method, Request, Response};
+use hyper::{Method, Request, Response, Uri};
+use hyper_tls::HttpsConnector;
+use hyper_util::{client::legacy::Client, rt::TokioExecutor};
 
 use hyper_util::rt::tokio::TokioIo;
 use tokio::net::{TcpListener, TcpStream};
@@ -37,28 +38,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn proxy(
-    req: Request<hyper::body::Incoming>,
+    mut req: Request<hyper::body::Incoming>,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-    println!("1----------------req: {:?}", req);
-    println!(
-        "2----------------authorization: {:?}",
-        req.headers().get("Authorization")
-    );
-
     if Method::CONNECT == req.method() {
-        // Received an HTTP request like:
-        // ```
-        // CONNECT www.domain.com:443 HTTP/1.1
-        // Host: www.domain.com:443
-        // Proxy-Connection: Keep-Alive
-        // ```
-        //
-        // When HTTP method is CONNECT we should return an empty body
-        // then we can eventually upgrade the connection and talk a new protocol.
-        //
-        // Note: only after client received an empty body with STATUS_OK can the
-        // connection be upgraded, so we can't return a response inside
-        // `on_upgrade` future.
         if let Some(addr) = host_addr(req.uri()) {
             tokio::task::spawn(async move {
                 match hyper::upgrade::on(req).await {
@@ -80,47 +62,20 @@ async fn proxy(
             Ok(resp)
         }
     } else {
-        let host = "index.docker.io";
-        let port = req.uri().port_u16().unwrap_or(80);
+        let https = HttpsConnector::new();
+        let client = Client::builder(TokioExecutor::new()).build::<_, hyper::body::Incoming>(https);
 
-        let mut new_req = Request::builder()
-            .uri(format!("https://index.docker.io{}", req.uri().path()))
-            .header("Host", "index.docker.io")
-            .method(req.method())
-            .body(Empty::<Bytes>::new())
+        let uri = format!("https://index.docker.io{}", req.uri().path())
+            .parse::<Uri>()
             .unwrap();
 
-        *new_req.headers_mut() = req.headers().clone();
-        new_req
-            .headers_mut()
-            .insert("Host", "index.docker.io".parse().unwrap())
-            .unwrap();
-
-        let stream = TcpStream::connect((host, port)).await.unwrap();
-        let io = TokioIo::new(stream);
-
-        let (mut sender, conn) = Builder::new()
-            .preserve_header_case(true)
-            .title_case_headers(true)
-            .handshake(io)
-            .await?;
-        tokio::task::spawn(async move {
-            if let Err(err) = conn.await {
-                println!("Connection failed: {:?}", err);
-            }
-        });
-
-        println!("2-------------req: {:?}", new_req);
-        println!("2-------------scheme: {:?}", new_req.uri().scheme());
-        println!("2-------------host: {:?}", new_req.uri().host());
-        println!(
-            "2-------------authorization: {:?}",
-            new_req.headers().get("Authorization")
+        *req.uri_mut() = uri.clone();
+        req.headers_mut().insert(
+            "Host",
+            "index.docker.io".parse().expect("Host header is valid"),
         );
 
-        let resp = sender.send_request(new_req).await?;
-        println!("3-------------resp: {:?}", resp);
-        println!("3-------------status: {:?}", resp.status());
+        let resp = client.request(req).await.unwrap();
         Ok(resp.map(|b| b.boxed()))
     }
 }
