@@ -23,7 +23,6 @@ fn main() {
     let blogs = DashSet::new();
     blogs.insert("Veloren");
     blogs.insert("Jerry");
-    blogs.insert("Terry");
 
     let blog = blogs.iter().next();
 
