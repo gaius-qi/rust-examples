@@ -10,6 +10,7 @@ fn main() {
         .expect("open file failed");
     f.seek(SeekFrom::Start(10)).expect("seek failed");
     f.write_all("aaa".as_bytes()).expect("write failed");
+    f.flush().expect("flush failed");
 
     f.seek(SeekFrom::Start(20)).expect("seek failed");
     f.write_all("bbb".as_bytes()).expect("write failed");
