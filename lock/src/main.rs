@@ -40,7 +40,7 @@ impl Example {
             return Ok(());
         };
 
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
         println!("Do something");
         Ok(())
     }
