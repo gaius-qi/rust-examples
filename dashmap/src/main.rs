@@ -19,6 +19,7 @@ fn main() {
     handle2.join().unwrap();
 
     println!("{:?}", reviews);
+    println!("{:?}", reviews);
 
     let blogs = DashSet::new();
     blogs.insert("Veloren");
