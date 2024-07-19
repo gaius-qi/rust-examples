@@ -1,8 +1,25 @@
+use path_absolutize::*;
 use std::fs;
 use std::io::prelude::*;
 use std::io::SeekFrom;
+use std::path::{Path, PathBuf};
 
 fn main() {
+    let mut path = Path::new("/Users").to_path_buf();
+    let bpath = if !path.ends_with("/") {
+        path.push("/");
+        path
+    } else {
+        path
+    };
+
+    println!("{}", bpath.to_str().unwrap());
+
+    let path = Path::new("/Users/qiwenbo/Work/github.com/gaius-qi/rust-examples/fs/content")
+        .absolutize()
+        .unwrap();
+    println!("{}", path.to_str().unwrap());
+
     let mut f = fs::OpenOptions::new()
         .create(true)
         .write(true)
