@@ -22,12 +22,12 @@ struct Data {
 }
 
 fn main() {
-    // run1();
+    run1();
     // run2();
     // run3();
     // run4();
     // run5();
-    run6();
+    // run6();
 }
 
 fn run1() {
@@ -36,16 +36,34 @@ fn run1() {
         let mut opts = Options::default();
         opts.create_if_missing(true);
         opts.create_missing_column_families(true);
-        opts.set_prefix_extractor(rocksdb::SliceTransform::create_fixed_prefix(3));
+        opts.set_prefix_extractor(rocksdb::SliceTransform::create_fixed_prefix(64));
         opts.set_memtable_prefix_bloom_ratio(0.2);
 
         let db = DB::open(&opts, path).unwrap();
 
-        db.put("aaa1".as_bytes(), b"aaa1").unwrap();
-        db.put("aaa2".as_bytes(), b"aaa2").unwrap();
-        db.put("bbb1".as_bytes(), b"bbb1").unwrap();
-        db.put("bbb2".as_bytes(), b"bbb2").unwrap();
-        let iter = db.prefix_iterator("aaa".as_bytes());
+        db.put(
+            "2c85dfe26e28827cb26fe23e924dbfa150cc4969aea1e9e93c744d82fd4508fe-0".as_bytes(),
+            b"ccc1",
+        )
+        .unwrap();
+        db.put(
+            "2c85dfe26e28827cb26fe23e924dbfa150cc4969aea1e9e93c744d82fd4508fe-1".as_bytes(),
+            b"ccc2",
+        )
+        .unwrap();
+        db.put(
+            "b2b06d6960a4492b7ec559d57fd65e3b19b622db067852fad52b111ce1ee0cf0-0".as_bytes(),
+            b"ddd1",
+        )
+        .unwrap();
+        db.put(
+            "b2b06d6960a4492b7ec559d57fd65e3b19b622db067852fad52b111ce1ee0cf0-1".as_bytes(),
+            b"ddd2",
+        )
+        .unwrap();
+        let iter = db.prefix_iterator(
+            "b2b06d6960a4492b7ec559d57fd65e3b19b622db067852fad52b111ce1ee0cf0".as_bytes(),
+        );
         for ele in iter {
             println!(
                 "test - key: {:?} value: {:?}",
