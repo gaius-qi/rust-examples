@@ -2,8 +2,9 @@ use sha2::{Digest, Sha256};
 
 fn main() {
     let mut hasher = Sha256::new();
-    hasher.update("127.0.0.1");
+    hasher.update("https://example.com");
     hasher.update("foo");
+    hasher.update("bar");
     let hash = hasher.finalize();
 
     println!("sha256 hash: {:?}", hex::encode(hash));
