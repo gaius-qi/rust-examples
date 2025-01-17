@@ -1,4 +1,10 @@
+use crc::*;
+use gxhash::GxHasher;
 use sha2::{Digest, Sha256};
+use std::hash::Hasher;
+use std::io::Read;
+use std::path::PathBuf;
+use wyhash::WyHash;
 use xxhash_rust::xxh3::Xxh3;
 
 fn main() {
@@ -28,4 +34,107 @@ fn main() {
     let hash2 = hasher2.digest().to_string();
 
     println!("xxh3 hash: {:?}", hash2);
+
+    let path = PathBuf::from("./test");
+
+    // let now = std::time::Instant::now();
+    // let f = std::fs::File::open(path.as_path()).unwrap();
+    // let mut buffer = [0; 4096];
+    // let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    // let mut hasher = Xxh3::new();
+    // loop {
+    // let n = reader.read(&mut buffer).unwrap();
+    // if n == 0 {
+    // break;
+    // }
+
+    // hasher.update(&buffer[..n]);
+    // }
+
+    // println!(
+    // "xxh3 hash: {:?}, cost: {:?}",
+    // hasher.digest().to_string(),
+    // now.elapsed()
+    // );
+
+    let now = std::time::Instant::now();
+    let f = std::fs::File::open(path.as_path()).unwrap();
+    let mut buffer = [0; 4096];
+    let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    let crc = Crc::<u32, Table<16>>::new(&CRC_32_ISCSI);
+    let mut digest = crc.digest();
+    loop {
+        let n = reader.read(&mut buffer).unwrap();
+        if n == 0 {
+            break;
+        }
+
+        digest.update(&buffer[..n]);
+    }
+
+    println!(
+        "crc32 hash: {:?}, cost: {:?}",
+        digest.finalize(),
+        now.elapsed()
+    );
+
+    // let now = std::time::Instant::now();
+    // let f = std::fs::File::open(path.as_path()).unwrap();
+    // let mut buffer = [0; 4096];
+    // let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    // let mut hasher = GxHasher::default();
+    // loop {
+    // let n = reader.read(&mut buffer).unwrap();
+    // if n == 0 {
+    // break;
+    // }
+
+    // hasher.write(&buffer[..n]);
+    // }
+
+    // println!(
+    // "gxhash hash: {:x}, cost: {:?}",
+    // hasher.finish(),
+    // now.elapsed()
+    // );
+
+    let now = std::time::Instant::now();
+    let f = std::fs::File::open(path.as_path()).unwrap();
+    let mut buffer = [0; 4096];
+    let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    let mut hasher = WyHash::default();
+    loop {
+        let n = reader.read(&mut buffer).unwrap();
+        if n == 0 {
+            break;
+        }
+
+        hasher.write(&buffer[..n]);
+    }
+
+    println!(
+        "wyhash hash: {:x}, cost: {:?}",
+        hasher.finish(),
+        now.elapsed()
+    );
+
+    // let now = std::time::Instant::now();
+    // let f = std::fs::File::open(path.as_path()).unwrap();
+    // let mut buffer = [0; 4096];
+    // let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    // let mut hasher = cityhasher::CityHasher::new();
+    // loop {
+    // let n = reader.read(&mut buffer).unwrap();
+    // if n == 0 {
+    // break;
+    // }
+
+    // hasher.write(&buffer[..n]);
+    // }
+
+    // println!(
+    // "cityhash hash: {:x}, cost: {:?}",
+    // hasher.finish(),
+    // now.elapsed()
+    // );
 }
