@@ -10,3 +10,4 @@ sha2 = "0.10"
 hex = "0.4"
 blake3 = "1.5.1"
 base16ct = { version = "0.2", features = ["alloc"] }
+xxhash-rust = { version = "0.8.15", features = ["xxh3", "std"] }
