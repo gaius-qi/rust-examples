@@ -35,6 +35,14 @@ fn main() {
 
     println!("xxh3 hash: {:?}", hash2);
 
+    let mut hasher3 = WyHash::default();
+    hasher3.write("https://example.com".as_bytes());
+    hasher3.write("foo".as_bytes());
+    hasher3.write("bar".as_bytes());
+    let hash3 = hasher3.finish();
+
+    println!("wyhash hash: {:?}", hash3);
+
     let path = PathBuf::from("./test");
 
     // let now = std::time::Instant::now();
@@ -113,7 +121,7 @@ fn main() {
     }
 
     println!(
-        "wyhash hash: {:x}, cost: {:?}",
+        "wyhash hash: {:?}, cost: {:?}",
         hasher.finish(),
         now.elapsed()
     );
