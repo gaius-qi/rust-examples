@@ -53,9 +53,7 @@ fn main() {
     }
 
     let process = psutil::process::Process::new(std::process::id()).unwrap();
-
     let memory_info = process.memory_info().unwrap();
-
     println!(
         "RSS (物理内存): {} 字节 ({:.2} MB)",
         memory_info.rss(),
@@ -70,6 +68,8 @@ fn main() {
 
     thread::sleep(Duration::from_secs(5));
 
+    let process = psutil::process::Process::new(std::process::id()).unwrap();
+    let memory_info = process.memory_info().unwrap();
     println!(
         "RSS (物理内存): {} 字节 ({:.2} MB)",
         memory_info.rss(),
