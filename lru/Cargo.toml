@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 lru = "0.12.5"
+bytes = "1.10"
+psutil = "3.2.2"
+uluru = "3.1.0"
