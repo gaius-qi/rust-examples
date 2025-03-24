@@ -86,6 +86,26 @@ fn main() {
         now.elapsed()
     );
 
+    let now = std::time::Instant::now();
+    let f = std::fs::File::open(path.as_path()).unwrap();
+    let mut buffer = [0; 4096];
+    let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    let mut hasher = Sha256::new();
+    loop {
+        let n = reader.read(&mut buffer).unwrap();
+        if n == 0 {
+            break;
+        }
+
+        hasher.update(&buffer[..n]);
+    }
+
+    println!(
+        "sha256 hash: {:?}, cost: {:?}",
+        hex::encode(hasher.finalize()),
+        now.elapsed()
+    );
+
     // let now = std::time::Instant::now();
     // let f = std::fs::File::open(path.as_path()).unwrap();
     // let mut buffer = [0; 4096];
@@ -106,25 +126,25 @@ fn main() {
     // now.elapsed()
     // );
 
-    let now = std::time::Instant::now();
-    let f = std::fs::File::open(path.as_path()).unwrap();
-    let mut buffer = [0; 4096];
-    let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
-    let mut hasher = WyHash::default();
-    loop {
-        let n = reader.read(&mut buffer).unwrap();
-        if n == 0 {
-            break;
-        }
+    // let now = std::time::Instant::now();
+    // let f = std::fs::File::open(path.as_path()).unwrap();
+    // let mut buffer = [0; 4096];
+    // let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    // let mut hasher = WyHash::default();
+    // loop {
+    // let n = reader.read(&mut buffer).unwrap();
+    // if n == 0 {
+    // break;
+    // }
 
-        hasher.write(&buffer[..n]);
-    }
+    // hasher.write(&buffer[..n]);
+    // }
 
-    println!(
-        "wyhash hash: {:?}, cost: {:?}",
-        hasher.finish(),
-        now.elapsed()
-    );
+    // println!(
+    // "wyhash hash: {:?}, cost: {:?}",
+    // hasher.finish(),
+    // now.elapsed()
+    // );
 
     // let now = std::time::Instant::now();
     // let f = std::fs::File::open(path.as_path()).unwrap();
