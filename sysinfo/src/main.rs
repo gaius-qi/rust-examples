@@ -1,20 +1,30 @@
-use std::path::PathBuf;
-use sysinfo::{DiskExt, System, SystemExt};
+use sysinfo::Networks;
 
 fn main() {
-    let path = PathBuf::from("/System");
+    let mut networks = Networks::new_with_refreshed_list();
+    let network_data = networks.get("en0").unwrap();
+    println!("Network transmit speed: {}", network_data.transmitted());
+    println!(
+        "Network total bytes transmitted: {}",
+        network_data.total_transmitted()
+    );
+    println!("Network receive speed: {}", network_data.received());
+    println!(
+        "Network total bytes received: {}",
+        network_data.total_received()
+    );
 
-    let mut sys = System::new_all();
-    // First we update all information of our `System` struct.
-    sys.refresh_all();
-
-    // We display all disks' information:
-    println!("=> disks:");
-    for disk in sys.disks() {
-        if path.starts_with(disk.mount_point()) {
-            println!("match {:?}", disk);
-        }
-
-        println!("{:?}", disk);
-    }
+    std::thread::sleep(std::time::Duration::from_secs(5));
+    networks.refresh();
+    let network_data = networks.get("en0").unwrap();
+    println!("Network transmit speed: {}", network_data.transmitted());
+    println!(
+        "Network total bytes transmitted: {}",
+        network_data.total_transmitted()
+    );
+    println!("Network receive speed: {}", network_data.received());
+    println!(
+        "Network total bytes received: {}",
+        network_data.total_received()
+    );
 }
