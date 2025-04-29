@@ -10,7 +10,7 @@ fn fallocate_zero(file_path: &str, length: u64) -> io::Result<()> {
 
     let offset = 0;
     file.set_len(length)?;
-    let flags = FallocateFlags::ZERO_RANGE | FallocateFlags::KEEP_SIZE;
+    let flags = FallocateFlags::KEEP_SIZE;
     println!("Attempting fallocate with zero range for {} bytes", length);
 
     // 调用 fallocate
@@ -28,7 +28,7 @@ fn fallocate_zero(file_path: &str, length: u64) -> io::Result<()> {
 
 fn main() -> io::Result<()> {
     let file_path = "zeroed_file.dat";
-    let size_to_allocate = 1024 * 1024;
+    let size_to_allocate = 10 * 1024 * 1024;
 
     match fallocate_zero(file_path, size_to_allocate) {
         Ok(_) => println!("File '{}' allocated and zeroed successfully.", file_path),
