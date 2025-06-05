@@ -26,6 +26,32 @@ fn main() {
     blogs.insert("Jerry");
 
     let blog = blogs.iter().next();
-
     println!("{:?}", blog.unwrap().to_string());
+
+    let files = Arc::new(DashMap::<u32, Vec<u32>>::new());
+    match files.entry(1) {
+        dashmap::mapref::entry::Entry::Vacant(_) => {}
+        dashmap::mapref::entry::Entry::Occupied(mut entry) => {
+            entry.get_mut().push(1);
+        }
+    }
+
+    files.entry(2).or_default().push(2);
+    match files.entry(2) {
+        dashmap::mapref::entry::Entry::Vacant(_) => {}
+        dashmap::mapref::entry::Entry::Occupied(mut entry) => {
+            entry.get_mut().push(1);
+        }
+    }
+    files.remove(&2);
+
+    match files.entry(2) {
+        dashmap::mapref::entry::Entry::Vacant(_) => {}
+        dashmap::mapref::entry::Entry::Occupied(mut entry) => {
+            entry.get_mut().push(1);
+        }
+    }
+
+    println!("{:?}", files.is_empty());
+    println!("{:?}", files);
 }
