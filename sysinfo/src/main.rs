@@ -3,7 +3,7 @@ use std::{
     thread::{self, sleep},
     time,
 };
-use sysinfo::{self};
+use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System, UpdateKind};
 
 fn main() {
     // let mut networks = Networks::new_with_refreshed_list();
@@ -36,7 +36,6 @@ fn main() {
     let pid = sysinfo::get_current_pid().unwrap();
     println!("I am: {:}", pid);
     let mut system = sysinfo::System::new_all();
-
     for i in 0..10 {
         let children: Vec<_> = (0..1000)
             .map(|_| {
@@ -47,14 +46,12 @@ fn main() {
             })
             .collect();
 
-        if !system.refresh_processes(pid, true) {
-            println!("Process refreshing failed");
-            break;
-        }
+        system.refresh_all();
 
-        let process = procfs::process::Process::new(pid).expect("Our process exists. qed.");
+        let process =
+            procfs::process::Process::new(pid.as_u32() as i32).expect("Our process exists. qed.");
         let threads = process.stat().ok().map(|s| s.num_threads).unwrap();
-        let open_fd = process.fd().map(|f| f.len()).unwrap();
+        let open_fd = process.fd().map(|f| f.count()).unwrap();
 
         println!(
             "Iteration {:}: I have {:} threads and {:} open file handles",
