@@ -23,10 +23,15 @@ fn main() {
     let mut nodes = vec![];
     nodes.push(VNode::new("10.244.1.237", 8002));
     nodes.push(VNode::new("10.244.2.218", 8002));
+    nodes.push(VNode::new("10.244.2.239", 8002));
+    nodes.push(VNode::new("10.244.2.241", 8002));
 
     for node in nodes {
         ring.add(node);
     }
+
+    println!("{:?}", ring.get(&"4088b9".to_string()));
+    println!("{:?}", ring.get_with_replicas(&"4088b9".to_string(), 2));
 
     let s1 = String::from("4088b9");
     let s2 = s1[0..1].to_string();
