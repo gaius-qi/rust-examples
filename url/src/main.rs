@@ -2,6 +2,10 @@ use std::path::{Path, PathBuf};
 use url::Url;
 
 fn main() {
+    let a = Url::parse("http://example.com/file.txt").unwrap();
+    let a = a.join(".").unwrap();
+    println!("{}", a.path());
+
     let domain_name = Url::parse("http://30.230.66.0:8002")
         .unwrap()
         .host_str()
