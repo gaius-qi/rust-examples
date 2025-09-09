@@ -3,12 +3,12 @@ use tokio::sync::mpsc;
 use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 
-async fn do_one(i: u32, semaphore: Arc<Semaphore>) -> Result<(), &'static str> {
-    // if i == 5 {
-    // return Err("task failed");
-    // }
+async fn do_one(i: u32) -> Result<(), &'static str> {
+    println!("------------ task {} received", i);
+    if i == 5 {
+        return Err("task failed");
+    }
 
-    let _permit = semaphore.acquire().await.unwrap();
     println!("task {} started", i);
     if i % 2 == 0 {
         tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
@@ -30,9 +30,7 @@ async fn main() {
     });
 
     let mut set = JoinSet::new();
-
     let semaphore = Arc::new(Semaphore::new(3));
-
     loop {
         tokio::select! {
             n = in_stream_rx.recv() => {
@@ -40,7 +38,11 @@ async fn main() {
                     break;
                 }
                 let semaphore = semaphore.clone();
-                set.spawn(do_one(n.unwrap(), semaphore));
+                let permit = semaphore.acquire_owned().await.unwrap();
+                set.spawn(async move {
+                    let _permit = permit;
+                    do_one(n.unwrap()).await
+                });
             },
         }
     }
@@ -51,7 +53,7 @@ async fn main() {
                 Ok(_) => {}
                 Err(_) => {
                     println!("task failed 1");
-                    set.abort_all()
+                    set.shutdown().await
                 }
             },
             Err(err) => println!("task failed 2 {}", err),
