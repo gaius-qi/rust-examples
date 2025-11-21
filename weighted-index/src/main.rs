@@ -2,11 +2,15 @@ use rand::distr::weighted::WeightedIndex;
 use rand::prelude::*;
 
 fn main() {
-    let choices = ['a', 'b', 'c'];
-    let weights = [10000, 20000, 30000];
-    let dist = WeightedIndex::new(&weights).unwrap();
+    let weights = [184392642952, 162384693384, 112517285280];
+    let dist = WeightedIndex::<u64>::new(weights).unwrap();
     let mut rng = rand::rng();
-    for _ in 0..100 {
-        println!("{}", choices[dist.sample(&mut rng)]);
+
+    let mut counter = [0; 3];
+    for _ in 0..1000 {
+        let index = dist.sample(&mut rng);
+        counter[index] += 1;
     }
+
+    println!("a: {}, b: {}, c: {}", counter[0], counter[1], counter[2]);
 }
