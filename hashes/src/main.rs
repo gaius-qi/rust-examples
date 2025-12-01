@@ -45,25 +45,25 @@ fn main() {
 
     let path = PathBuf::from("./test");
 
-    // let now = std::time::Instant::now();
-    // let f = std::fs::File::open(path.as_path()).unwrap();
-    // let mut buffer = [0; 4096];
-    // let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
-    // let mut hasher = Xxh3::new();
-    // loop {
-    // let n = reader.read(&mut buffer).unwrap();
-    // if n == 0 {
-    // break;
-    // }
+    let now = std::time::Instant::now();
+    let f = std::fs::File::open(path.as_path()).unwrap();
+    let mut buffer = [0; 4096];
+    let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    let mut hasher = Xxh3::new();
+    loop {
+        let n = reader.read(&mut buffer).unwrap();
+        if n == 0 {
+            break;
+        }
 
-    // hasher.update(&buffer[..n]);
-    // }
+        hasher.update(&buffer[..n]);
+    }
 
-    // println!(
-    // "xxh3 hash: {:?}, cost: {:?}",
-    // hasher.digest().to_string(),
-    // now.elapsed()
-    // );
+    println!(
+        "xxh3 hash: {:?}, cost: {:?}",
+        hasher.digest().to_string(),
+        now.elapsed()
+    );
 
     let now = std::time::Instant::now();
     let f = std::fs::File::open(path.as_path()).unwrap();
@@ -106,63 +106,83 @@ fn main() {
         now.elapsed()
     );
 
-    // let now = std::time::Instant::now();
-    // let f = std::fs::File::open(path.as_path()).unwrap();
-    // let mut buffer = [0; 4096];
-    // let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
-    // let mut hasher = GxHasher::default();
-    // loop {
-    // let n = reader.read(&mut buffer).unwrap();
-    // if n == 0 {
-    // break;
-    // }
+    let now = std::time::Instant::now();
+    let f = std::fs::File::open(path.as_path()).unwrap();
+    let mut buffer = [0; 4096];
+    let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    let mut hasher = blake3::Hasher::new();
+    loop {
+        let n = reader.read(&mut buffer).unwrap();
+        if n == 0 {
+            break;
+        }
 
-    // hasher.write(&buffer[..n]);
-    // }
+        hasher.update(&buffer[..n]);
+    }
 
-    // println!(
-    // "gxhash hash: {:x}, cost: {:?}",
-    // hasher.finish(),
-    // now.elapsed()
-    // );
+    println!(
+        "blake3 hash: {:?}, cost: {:?}",
+        hasher.finalize().to_hex(),
+        now.elapsed()
+    );
 
-    // let now = std::time::Instant::now();
-    // let f = std::fs::File::open(path.as_path()).unwrap();
-    // let mut buffer = [0; 4096];
-    // let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
-    // let mut hasher = WyHash::default();
-    // loop {
-    // let n = reader.read(&mut buffer).unwrap();
-    // if n == 0 {
-    // break;
-    // }
+    let now = std::time::Instant::now();
+    let f = std::fs::File::open(path.as_path()).unwrap();
+    let mut buffer = [0; 4096];
+    let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    let mut hasher = GxHasher::default();
+    loop {
+        let n = reader.read(&mut buffer).unwrap();
+        if n == 0 {
+            break;
+        }
 
-    // hasher.write(&buffer[..n]);
-    // }
+        hasher.write(&buffer[..n]);
+    }
 
-    // println!(
-    // "wyhash hash: {:?}, cost: {:?}",
-    // hasher.finish(),
-    // now.elapsed()
-    // );
+    println!(
+        "gxhash hash: {:x}, cost: {:?}",
+        hasher.finish(),
+        now.elapsed()
+    );
 
-    // let now = std::time::Instant::now();
-    // let f = std::fs::File::open(path.as_path()).unwrap();
-    // let mut buffer = [0; 4096];
-    // let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
-    // let mut hasher = cityhasher::CityHasher::new();
-    // loop {
-    // let n = reader.read(&mut buffer).unwrap();
-    // if n == 0 {
-    // break;
-    // }
+    let now = std::time::Instant::now();
+    let f = std::fs::File::open(path.as_path()).unwrap();
+    let mut buffer = [0; 4096];
+    let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    let mut hasher = WyHash::default();
+    loop {
+        let n = reader.read(&mut buffer).unwrap();
+        if n == 0 {
+            break;
+        }
 
-    // hasher.write(&buffer[..n]);
-    // }
+        hasher.write(&buffer[..n]);
+    }
 
-    // println!(
-    // "cityhash hash: {:x}, cost: {:?}",
-    // hasher.finish(),
-    // now.elapsed()
-    // );
+    println!(
+        "wyhash hash: {:?}, cost: {:?}",
+        hasher.finish(),
+        now.elapsed()
+    );
+
+    let now = std::time::Instant::now();
+    let f = std::fs::File::open(path.as_path()).unwrap();
+    let mut buffer = [0; 4096];
+    let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
+    let mut hasher = cityhasher::CityHasher::new();
+    loop {
+        let n = reader.read(&mut buffer).unwrap();
+        if n == 0 {
+            break;
+        }
+
+        hasher.write(&buffer[..n]);
+    }
+
+    println!(
+        "cityhash hash: {:x}, cost: {:?}",
+        hasher.finish(),
+        now.elapsed()
+    );
 }
