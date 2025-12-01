@@ -4,8 +4,8 @@ use sha2::{Digest, Sha256};
 use std::hash::Hasher;
 use std::io::Read;
 use std::path::PathBuf;
+use twox_hash::XxHash64;
 use wyhash::WyHash;
-use xxhash_rust::xxh3::Xxh3;
 
 fn main() {
     let mut hasher = Sha256::new();
@@ -27,19 +27,19 @@ fn main() {
         base16ct::lower::encode_string(hash1.as_bytes())
     );
 
-    let mut hasher2 = Xxh3::new();
-    hasher2.update("https://example.com".as_bytes());
-    hasher2.update("foo".as_bytes());
-    hasher2.update("bar".as_bytes());
-    let hash2 = hasher2.digest().to_string();
+    let mut hasher2 = XxHash64::default();
+    hasher2.write("https://example.com".as_bytes());
+    hasher2.write("foo".as_bytes());
+    hasher2.write("bar".as_bytes());
+    let hash2 = hasher2.finish().to_string();
 
-    println!("xxh3 hash: {:?}", hash2);
+    println!("xxhash64 hash: {:?}", hash2);
 
     let mut hasher3 = WyHash::default();
     hasher3.write("https://example.com".as_bytes());
     hasher3.write("foo".as_bytes());
     hasher3.write("bar".as_bytes());
-    let hash3 = hasher3.finish();
+    let hash3 = hasher3.finish().to_string();
 
     println!("wyhash hash: {:?}", hash3);
 
@@ -49,19 +49,19 @@ fn main() {
     let f = std::fs::File::open(path.as_path()).unwrap();
     let mut buffer = [0; 4096];
     let mut reader = std::io::BufReader::with_capacity(buffer.len(), f);
-    let mut hasher = Xxh3::new();
+    let mut hasher = XxHash64::default();
     loop {
         let n = reader.read(&mut buffer).unwrap();
         if n == 0 {
             break;
         }
 
-        hasher.update(&buffer[..n]);
+        hasher.write(&buffer[..n]);
     }
 
     println!(
-        "xxh3 hash: {:?}, cost: {:?}",
-        hasher.digest().to_string(),
+        "xxhash64 hash: {:?}, cost: {:?}",
+        hasher.finish().to_string(),
         now.elapsed()
     );
 
