@@ -1,5 +1,5 @@
-use opendal::Operator;
-use tracing::info;
+use opendal::{Operator, layers::HttpClientLayer, layers::TimeoutLayer, raw::HttpClient};
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
@@ -11,8 +11,14 @@ async fn main() {
         .root("/")
         .bucket("");
 
-    let operator = Operator::new(builder).unwrap().finish();
-    let metadata = operator.stat_with("").await.unwrap();
+    let operator = Operator::new(builder)
+        .unwrap()
+        .finish()
+        .layer(TimeoutLayer::new().with_timeout(Duration::from_secs(10)))
+        .layer(HttpClientLayer::new(HttpClient::with(
+            reqwest::Client::builder().build().unwrap(),
+        )));
 
-    info!("metadata: {:?}", metadata.content_length());
+    let metadata = operator.stat_with("").await.unwrap();
+    println!("content length: {:?}", metadata.content_length());
 }
