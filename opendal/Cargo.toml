@@ -1,0 +1,29 @@
+[package]
+name = "opendal"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.28.1", features = ["full"] }
+tracing = "0.1"
+opendal = { version = "0.54.1", features = [
+    "services-s3",
+    "services-azblob",
+    "services-gcs",
+    "services-oss",
+    "services-obs",
+    "services-cos",
+    "services-webhdfs",
+] }
+reqwest = { version = "0.12.4", features = [
+    "stream",
+    "native-tls",
+    "default-tls",
+    "rustls-tls",
+    "gzip",
+    "brotli",
+    "zstd",
+    "deflate",
+    "blocking",
+    "hickory-dns",
+] }
