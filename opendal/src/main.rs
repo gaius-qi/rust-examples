@@ -20,6 +20,12 @@ async fn main() {
             reqwest::Client::builder().build().unwrap(),
         )));
 
+    if let Err(err) = operator.stat("test_file").await {
+        if err.kind() == opendal::ErrorKind::NotFound {
+            println!("entry not exist")
+        }
+    };
+
     let mut w = operator
         .writer_with("gaius/data")
         .concurrent(4)
