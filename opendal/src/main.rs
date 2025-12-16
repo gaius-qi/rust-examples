@@ -3,11 +3,12 @@ use std::time::Duration;
 
 #[tokio::main]
 async fn main() {
-    let builder = opendal::services::Oss::default();
+    let builder = opendal::services::S3::default();
     let builder = builder
         .access_key_id("")
-        .access_key_secret("")
+        .secret_access_key("")
         .endpoint("")
+        .region("")
         .root("/")
         .bucket("");
 
@@ -19,6 +20,16 @@ async fn main() {
             reqwest::Client::builder().build().unwrap(),
         )));
 
-    let metadata = operator.stat_with("").await.unwrap();
-    println!("content length: {:?}", metadata.content_length());
+    let mut w = operator
+        .writer_with("gaius/data")
+        .concurrent(4)
+        .await
+        .unwrap();
+
+    w.write("hello world".as_bytes()).await.unwrap();
+    w.write("yes!".as_bytes()).await.unwrap();
+    w.close().await.unwrap();
+
+    let bs = operator.read("gaius/data").await.unwrap();
+    println!("read: {} bytes", bs.len());
 }
