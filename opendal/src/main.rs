@@ -1,10 +1,12 @@
 use opendal::{Operator, layers::HttpClientLayer, layers::TimeoutLayer, raw::HttpClient};
 use std::time::Duration;
 
+const CHUNK_SIZE: u64 = 4 * 1024 * 1024;
+const CONCURRENT: usize = 8;
+
 #[tokio::main]
-async fn main() {
-    let builder = opendal::services::S3::default();
-    let builder = builder
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let s3_builder = opendal::services::S3::default()
         .access_key_id("")
         .secret_access_key("")
         .endpoint("")
@@ -12,30 +14,44 @@ async fn main() {
         .root("/")
         .bucket("");
 
-    let operator = Operator::new(builder)
-        .unwrap()
+    let s3_operator = Operator::new(s3_builder)?
         .finish()
         .layer(TimeoutLayer::new().with_timeout(Duration::from_secs(10)))
         .layer(HttpClientLayer::new(HttpClient::with(
-            reqwest::Client::builder().build().unwrap(),
+            reqwest::Client::builder().build()?,
         )));
 
-    if let Err(err) = operator.stat("test_file").await {
-        if err.kind() == opendal::ErrorKind::NotFound {
-            println!("entry not exist")
-        }
-    };
+    let fs_builder = opendal::services::Fs::default().root(".");
+    let fs_operator = Operator::new(fs_builder)?.finish();
 
-    let mut w = operator
+    let meta = fs_operator.stat("src/random.txt").await?;
+    let file_size = meta.content_length();
+
+    let reader = fs_operator
+        .reader_with("src/random.txt")
+        .concurrent(CONCURRENT)
+        .chunk(CHUNK_SIZE as usize)
+        .await?;
+
+    let mut writer = s3_operator
         .writer_with("gaius/data")
-        .concurrent(4)
-        .await
-        .unwrap();
+        .concurrent(CONCURRENT)
+        .chunk(CHUNK_SIZE as usize)
+        .await?;
 
-    w.write("hello world".as_bytes()).await.unwrap();
-    w.write("yes!".as_bytes()).await.unwrap();
-    w.close().await.unwrap();
+    let mut offset: u64 = 0;
+    while offset < file_size {
+        let end = std::cmp::min(offset + CHUNK_SIZE, file_size);
+        let buf = reader.read(offset..end).await?;
+        writer.write(buf).await?;
+        offset = end;
+    }
 
-    let bs = operator.read("gaius/data").await.unwrap();
-    println!("read: {} bytes", bs.len());
+    writer.close().await?;
+    println!("finished!");
+
+    let stat = s3_operator.stat("gaius/data").await?;
+    println!("file size: {} bytes", stat.content_length());
+
+    Ok(())
 }
