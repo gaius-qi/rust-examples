@@ -1,7 +1,7 @@
 use opendal::{Operator, layers::HttpClientLayer, layers::TimeoutLayer, raw::HttpClient};
 use std::time::Duration;
 
-const CHUNK_SIZE: u64 = 4 * 1024 * 1024;
+const CHUNK_SIZE: u64 = 1024;
 const CONCURRENT: usize = 8;
 
 #[tokio::main]
@@ -52,6 +52,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let stat = s3_operator.stat("gaius/data").await?;
     println!("file size: {} bytes", stat.content_length());
+
+    let reader = s3_operator
+        .reader_with("gaius/data")
+        .concurrent(CONCURRENT)
+        .chunk(CHUNK_SIZE as usize)
+        .await?;
+
+    let buf = reader.read(0..stat.content_length()).await?;
+    println!("Reader: {:?}", buf);
 
     Ok(())
 }
