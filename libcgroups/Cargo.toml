@@ -1,0 +1,7 @@
+[package]
+name = "libcgroups"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libcgroups = "0.5"
