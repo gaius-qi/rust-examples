@@ -11,7 +11,7 @@ pub enum RuntimeEnvironment {
 pub fn detect_runtime_environment() -> RuntimeEnvironment {
     // 1. 首先检测是否在容器中
     if is_container() {
-        return RuntimeEnvironment::Container(container_type);
+        return RuntimeEnvironment::Container;
     }
 
     // 2. 检测是否由 systemd 管理
@@ -214,19 +214,16 @@ fn main() {
     }
 
     // 3. 使用 libcgroups (需要添加依赖)
-    #[cfg(feature = "libcgroups")]
-    {
-        println!("\n=== 资源信息 (libcgroups) ===\n");
-        match get_resource_info_with_libcgroups() {
-            Ok(info) => {
-                println!("内存限制: {:?}", info.memory_limit);
-                println!("内存使用: {:?}", info.memory_usage);
-                println!("CPU 限制: {:?}", info.cpu_limit);
-                println!("CPU 使用(ns): {:?}", info.cpu_usage_ns);
-            }
-            Err(e) => {
-                println!("获取资源信息失败: {}", e);
-            }
+    println!("\n=== 资源信息 (libcgroups) ===\n");
+    match get_resource_info_with_libcgroups() {
+        Ok(info) => {
+            println!("内存限制: {:?}", info.memory_limit);
+            println!("内存使用: {:?}", info.memory_usage);
+            println!("CPU 限制: {:?}", info.cpu_limit);
+            println!("CPU 使用(ns): {:?}", info.cpu_usage_ns);
+        }
+        Err(e) => {
+            println!("获取资源信息失败: {}", e);
         }
     }
 }
