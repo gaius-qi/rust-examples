@@ -4,6 +4,7 @@ use cgroups_rs::fs::{
 };
 use std::fs;
 use std::path::Path;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum RuntimeEnvironment {
@@ -106,31 +107,6 @@ fn main() {
     match &env {
         RuntimeEnvironment::Container => {
             println!("Runtime Environment: Containerized");
-
-            let pid = std::process::id();
-            let relative_paths = get_cgroups_relative_paths_by_pid(pid).unwrap();
-            println!("Relative Path: {:?}", relative_paths);
-
-            let hier = hierarchies::auto();
-            println!("Cgroup Hierarchy: {}", hier.v2());
-
-            let cg = Cgroup::load_with_relative_paths(hier, "", relative_paths);
-            if let Some(mem) = cg.controller_of::<MemController>() {
-                let stats = mem.memory_stat();
-                println!("Memory Usage: {} bytes", stats.usage_in_bytes);
-                println!("Memory Limit: {} bytes", stats.limit_in_bytes);
-            }
-
-            if let Some(cpu) = cg.controller_of::<CpuController>() {
-                let quota = cpu.cfs_quota().unwrap();
-                let period = cpu.cfs_period().unwrap();
-                println!("CPU Quota: {} us", quota);
-                println!("CPU Period: {} us", period);
-
-                if quota > 0 {
-                    println!("CPU Limit: {:.2} cores", quota as f64 / period as f64);
-                }
-            }
         }
         RuntimeEnvironment::Systemd => {
             println!("Runtime Environment: Systemd");
@@ -139,4 +115,52 @@ fn main() {
             println!("Runtime Environment: Standalone");
         }
     }
+
+    let pid = std::process::id();
+    let hierarchies = hierarchies::auto();
+    let cg = if hierarchies.v2() {
+        let path = get_cgroups_v2_path_by_pid(pid);
+        Cgroup::load(hierarchies, path)
+    } else {
+        // get container main process cgroup
+        let path = get_cgroups_relative_paths_by_pid(pid).unwrap();
+        Cgroup::load_with_relative_paths(hierarchies::auto(), Path::new("."), path)
+    };
+
+    if let Some(mem) = cg.controller_of::<MemController>() {
+        let stats = mem.memory_stat();
+        println!("Memory Usage: {} bytes", stats.usage_in_bytes);
+        println!("Memory Limit: {} bytes", stats.limit_in_bytes);
+    }
+
+    if let Some(cpu) = cg.controller_of::<CpuController>() {
+        let quota = cpu.cfs_quota().unwrap();
+        let period = cpu.cfs_period().unwrap();
+        println!("CPU Quota: {} us", quota);
+        println!("CPU Period: {} us", period);
+
+        if quota > 0 {
+            println!("CPU Limit: {:.2} cores", quota as f64 / period as f64);
+        }
+    }
+}
+
+/// Get the cgroups v2 path given a PID
+pub fn get_cgroups_v2_path_by_pid(pid: u32) -> PathBuf {
+    let path = format!("/proc/{}/cgroup", pid);
+    let content = fs::read_to_string(path).unwrap();
+    let content = content.lines().next().unwrap_or("");
+    parse_cgroups_v2_path(content).canonicalize().unwrap()
+}
+
+// https://github.com/opencontainers/runc/blob/1950892f69597aa844cbf000fbdf77610dda3a44/libcontainer/cgroups/fs2/defaultpath.go#L83
+fn parse_cgroups_v2_path(content: &str) -> PathBuf {
+    // the entry for cgroup v2 is always in the format like `0::$PATH`
+    // where 0 is the hierarchy ID, the controller name is omitted in cgroup v2
+    // and $PATH is the cgroup path
+    // see https://docs.kernel.org/admin-guide/cgroup-v2.html
+    let path = content.strip_prefix("0::").unwrap();
+    let path = path.trim_start_matches('/');
+
+    PathBuf::from(format!("/sys/fs/cgroup/{}", path))
 }
