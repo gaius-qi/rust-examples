@@ -88,6 +88,7 @@ fn main() {
 
     let pid = std::process::id() as u64;
     let cgroup_path = get_cgroup_path(pid).unwrap_or_else(|| "/".to_string());
+    println!("Cgroup Path: {}", cgroup_path);
 
     let hier = hierarchies::auto();
     let cg = Cgroup::load(hier, cgroup_path);
