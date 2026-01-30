@@ -1,16 +1,22 @@
 use cgroups_rs::fs::{Cgroup, cpu::CpuController, hierarchies, memory::MemController};
 use std::fs;
 use std::path::Path;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum RuntimeEnvironment {
     Container,
+    Systemd,
     Standalone,
 }
 
 pub fn detect_runtime_environment() -> RuntimeEnvironment {
     if is_container() {
         return RuntimeEnvironment::Container;
+    }
+
+    if is_systemd() {
+        return RuntimeEnvironment::Systemd;
     }
 
     RuntimeEnvironment::Standalone
@@ -60,6 +66,39 @@ fn is_container() -> bool {
     false
 }
 
+fn is_systemd() -> bool {
+    if std::env::var("INVOCATION_ID").is_ok() {
+        return true;
+    }
+
+    if std::env::var("JOURNAL_STREAM").is_ok() {
+        return true;
+    }
+
+    if let Ok(cgroup_content) = fs::read_to_string("/proc/self/cgroup") {
+        if cgroup_content.contains(".service") || cgroup_content.contains(".scope") {
+            return true;
+        }
+    }
+
+    if let Ok(ppid_cmdline) = fs::read_to_string("/proc/self/stat") {
+        let parts: Vec<&str> = ppid_cmdline.split_whitespace().collect();
+        if parts.len() > 3 {
+            if let Ok(ppid) = parts[3].parse::<u32>() {
+                if ppid == 1 {
+                    if let Ok(init_comm) = fs::read_to_string("/proc/1/comm") {
+                        if init_comm.trim() == "systemd" {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    false
+}
+
 fn get_cgroup_path(pid: u64) -> Option<String> {
     let content = fs::read_to_string(format!("/proc/{}/cgroup", pid)).ok()?;
     for line in content.lines() {
@@ -67,7 +106,8 @@ fn get_cgroup_path(pid: u64) -> Option<String> {
         if parts.len() >= 3 {
             // v2: "0::/path" or v1: find memory/cpu.
             if parts[0] == "0" || parts[1].contains("memory") || parts[1].contains("cpu") {
-                return Some(parts[2].to_string());
+                let cgroup_path = PathBuf::from(format!("/sys/fs/cgroup{}", parts[2]));
+                return Some(cgroup_path.to_string_lossy().to_string());
             }
         }
     }
@@ -81,18 +121,23 @@ fn main() {
         RuntimeEnvironment::Container => {
             println!("Runtime Environment: Containerized");
         }
+        RuntimeEnvironment::Systemd => {
+            println!("Runtime Environment: Systemd");
+        }
         RuntimeEnvironment::Standalone => {
             println!("Runtime Environment: Standalone");
         }
     }
 
     let pid = std::process::id() as u64;
-    let cgroup_path = get_cgroup_path(pid).unwrap_or_else(|| "/".to_string());
-    println!("Cgroup Path: {}", cgroup_path);
+    let cgroup_path = get_cgroup_path(pid);
+    println!("Cgroup Path: {:?}", cgroup_path);
 
+    let cgroup_path = cgroup_path.unwrap();
     let hier = hierarchies::auto();
-    let cg = Cgroup::load(hier, cgroup_path);
+    println!("Cgroup Hierarchy: {}", hier.v2());
 
+    let cg = Cgroup::load(hier, cgroup_path);
     if let Some(mem) = cg.controller_of::<MemController>() {
         let stats = mem.memory_stat();
         println!("Memory Usage: {} bytes", stats.usage_in_bytes);
