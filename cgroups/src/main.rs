@@ -1,7 +1,9 @@
-use cgroups_rs::fs::{Cgroup, cpu::CpuController, hierarchies, memory::MemController};
+use cgroups_rs::fs::{
+    Cgroup, cgroup::get_cgroups_relative_paths_by_pid, cpu::CpuController, hierarchies,
+    memory::MemController,
+};
 use std::fs;
 use std::path::Path;
-use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum RuntimeEnvironment {
@@ -99,59 +101,42 @@ fn is_systemd() -> bool {
     false
 }
 
-fn get_cgroup_path(pid: u64) -> Option<String> {
-    let content = fs::read_to_string(format!("/proc/{}/cgroup", pid)).ok()?;
-    for line in content.lines() {
-        let parts: Vec<&str> = line.split(':').collect();
-        if parts.len() >= 3 {
-            // v2: "0::/path" or v1: find memory/cpu.
-            if parts[0] == "0" || parts[1].contains("memory") || parts[1].contains("cpu") {
-                let cgroup_path = PathBuf::from(format!("/sys/fs/cgroup{}", parts[2]));
-                return Some(cgroup_path.to_string_lossy().to_string());
-            }
-        }
-    }
-
-    None
-}
-
 fn main() {
     let env = detect_runtime_environment();
     match &env {
         RuntimeEnvironment::Container => {
             println!("Runtime Environment: Containerized");
+
+            let pid = std::process::id();
+            let relative_paths = get_cgroups_relative_paths_by_pid(pid).unwrap();
+            println!("Relative Path: {:?}", relative_paths);
+
+            let hier = hierarchies::auto();
+            println!("Cgroup Hierarchy: {}", hier.v2());
+
+            let cg = Cgroup::load_with_relative_paths(hier, "", relative_paths);
+            if let Some(mem) = cg.controller_of::<MemController>() {
+                let stats = mem.memory_stat();
+                println!("Memory Usage: {} bytes", stats.usage_in_bytes);
+                println!("Memory Limit: {} bytes", stats.limit_in_bytes);
+            }
+
+            if let Some(cpu) = cg.controller_of::<CpuController>() {
+                let quota = cpu.cfs_quota().unwrap();
+                let period = cpu.cfs_period().unwrap();
+                println!("CPU Quota: {} us", quota);
+                println!("CPU Period: {} us", period);
+
+                if quota > 0 {
+                    println!("CPU Limit: {:.2} cores", quota as f64 / period as f64);
+                }
+            }
         }
         RuntimeEnvironment::Systemd => {
             println!("Runtime Environment: Systemd");
         }
         RuntimeEnvironment::Standalone => {
             println!("Runtime Environment: Standalone");
-        }
-    }
-
-    let pid = std::process::id() as u64;
-    let cgroup_path = get_cgroup_path(pid);
-    println!("Cgroup Path: {:?}", cgroup_path);
-
-    let cgroup_path = cgroup_path.unwrap();
-    let hier = hierarchies::auto();
-    println!("Cgroup Hierarchy: {}", hier.v2());
-
-    let cg = Cgroup::load(hier, cgroup_path);
-    if let Some(mem) = cg.controller_of::<MemController>() {
-        let stats = mem.memory_stat();
-        println!("Memory Usage: {} bytes", stats.usage_in_bytes);
-        println!("Memory Limit: {} bytes", stats.limit_in_bytes);
-    }
-
-    if let Some(cpu) = cg.controller_of::<CpuController>() {
-        let quota = cpu.cfs_quota().unwrap();
-        let period = cpu.cfs_period().unwrap();
-        println!("CPU Quota: {} us", quota);
-        println!("CPU Period: {} us", period);
-
-        if quota > 0 {
-            println!("CPU Limit: {:.2} cores", quota as f64 / period as f64);
         }
     }
 }
