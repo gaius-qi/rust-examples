@@ -7,7 +7,12 @@ edition = "2024"
 name = "hello"
 path = "src/bin/hello/main.rs"
 
+[[bin]]
+name = "async-hello"
+path = "src/bin/async_hello/main.rs"
+
 [dependencies]
+async-trait = "0.1"
 clap = { version = "4.4", features = ["cargo", "derive"] }
 env_logger = "0.11.7"
-fuser = "0.17.0"
+fuser = { version = "0.17.0", features = ["experimental"] }
